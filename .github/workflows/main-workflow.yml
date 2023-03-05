@@ -17,4 +17,4 @@ jobs:
         run:  sudo npm install
       
       - name: Run and test
-        run: npx mocha bmsmocha.js
+        run: node bms-monitor.js
