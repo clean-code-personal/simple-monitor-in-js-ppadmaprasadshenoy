@@ -1,4 +1,4 @@
-const { batteryIsOk } = require('../bmsproduction');
+const { batteryIsOk } = require('../bms-monitor');
 
 // 1: All parameters are within the range
 console.assert(batteryIsOk(25, 50, 0.5) === true, "Test case 1 failed");

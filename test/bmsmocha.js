@@ -1,5 +1,5 @@
 const { assert } = require('chai');
-const { batteryIsOk } = require('../bmsproduction');
+const { batteryIsOk } = require('../bms-monitor');
 
 describe('Battery Status', function() {
   it('All parameters are within the range', function() {
