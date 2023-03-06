@@ -8,39 +8,50 @@ function convertToFahrenheit(celsius) {
   return (celsius * 9 / 5) + 32;
 }
 
-function checkValueInRange(value, limit, tolerance, unit) {
-  const limitInCelsius = {
-    min: limit.min,
-    max: limit.max
-  };
-
+function convertLimitToCelsius(limit, unit) {
   if (unit === 'Fahrenheit') {
-    limitInCelsius.min = convertToFahrenheit(limit.min);
-    limitInCelsius.max = convertToFahrenheit(limit.max);
+    return {
+      min: convertToFahrenheit(limit.min),
+      max: convertToFahrenheit(limit.max)
+    };
+  } else {
+    return limit;
   }
+}
 
-  const upperLimit = limitInCelsius.max;
-  const lowerLimit = limitInCelsius.min;
-  const upperWarningLimit = upperLimit - (upperLimit * tolerance);
-  const lowerWarningLimit = lowerLimit + (upperLimit * tolerance);
+function checkValueInRange(value, limit, tolerance) {
+  const { max, min } = limit;
+  const upperLimit = max;
+  const lowerLimit = min;
+  const upperWarningLimit = max - (max * tolerance);
+  const lowerWarningLimit = min + (max * tolerance);
 
   if (value < lowerLimit) {
     return 'LOW';
   } else if (value > upperLimit) {
     return 'HIGH';
-  } else if (value >= lowerWarningLimit && value <= lowerLimit) {
-    return 'WARNING: Approaching discharge';
-  } else if (value >= upperLimit && value <= upperWarningLimit) {
-    return 'WARNING: Approaching charge-peak';
-  } else {
-    return 'NORMAL';
+  } else if (value >= lowerWarningLimit) {
+    if (value <= lowerLimit) {
+      return 'WARNING: Approaching discharge';
+    } else if (value >= upperLimit - (upperLimit - lowerLimit) * tolerance) {
+      return 'WARNING: Approaching charge-peak';
+    }
   }
+  return 'NORMAL';
 }
 
 function batteryIsOk(temperature, soc, charge_rate, temperatureUnit = 'Celsius') {
-  const temperatureStatus = checkValueInRange(temperature, MEASUREMENT_LIMITS.temperature.limit, MEASUREMENT_LIMITS.temperature.tolerance, temperatureUnit);
-  const socStatus = checkValueInRange(soc, MEASUREMENT_LIMITS.soc.limit, MEASUREMENT_LIMITS.soc.tolerance, MEASUREMENT_LIMITS.soc.unit);
-  const chargeRateStatus = checkValueInRange(charge_rate, MEASUREMENT_LIMITS.charge_rate.limit, MEASUREMENT_LIMITS.charge_rate.tolerance, MEASUREMENT_LIMITS.charge_rate.unit);
+  const temperatureLimit = convertLimitToCelsius(MEASUREMENT_LIMITS.temperature.limit, temperatureUnit);
+  const socLimit = MEASUREMENT_LIMITS.soc.limit;
+  const chargeRateLimit = MEASUREMENT_LIMITS.charge_rate.limit;
+
+  if (temperatureUnit !== 'Celsius' && temperatureUnit !== 'Fahrenheit') {
+    throw new Error('Unsupported temperature unit');
+  }
+
+  const temperatureStatus = checkValueInRange(temperature, temperatureLimit, MEASUREMENT_LIMITS.temperature.tolerance);
+  const socStatus = checkValueInRange(soc, socLimit, MEASUREMENT_LIMITS.soc.tolerance);
+  const chargeRateStatus = checkValueInRange(charge_rate, chargeRateLimit, MEASUREMENT_LIMITS.charge_rate.tolerance);
 
   console.log(`Temperature is ${temperature} ${temperatureUnit}. Status: ${temperatureStatus}`);
   console.log(`State of Charge is ${soc}${MEASUREMENT_LIMITS.soc.unit}. Status: ${socStatus}`);
