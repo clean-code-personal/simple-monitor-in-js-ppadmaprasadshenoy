@@ -5,21 +5,10 @@ const MEASUREMENT_LIMITS = {
 };
 
 function convertTemperatureUnit(temperature, fromUnit, toUnit) {
-  const conversionFactors = {
-    'Celsius-Fahrenheit': (temperature) => (temperature * 9 / 5) + 32,
-    'Fahrenheit-Celsius': (temperature) => (temperature - 32) * 5 / 9
-  };
-  const conversionKey = `${fromUnit}-${toUnit}`;
-
-  if (fromUnit === toUnit) {
-    return temperature;
-  }
-
-  if (!conversionFactors[conversionKey]) {
-    throw new Error(`Invalid temperature units: ${fromUnit}, ${toUnit}`);
-  }
-
-  return conversionFactors[conversionKey](temperature);
+  if (fromUnit === toUnit) return temperature;
+  if (fromUnit === 'Celsius' && toUnit === 'Fahrenheit') return (temperature * 9 / 5) + 32;
+  if (fromUnit === 'Fahrenheit' && toUnit === 'Celsius') return (temperature - 32) * 5 / 9;
+  throw new Error(`Invalid temperature units: ${fromUnit}, ${toUnit}`);
 }
 
 function checkValueInRange(value, limit, tolerance) {
@@ -27,27 +16,27 @@ function checkValueInRange(value, limit, tolerance) {
   const lowerLimit = limit.min;
   const upperWarningLimit = upperLimit - (upperLimit * tolerance);
   const lowerWarningLimit = lowerLimit + (upperLimit * tolerance);
+  let status = 'NORMAL';
 
-  if (value < lowerLimit) return 'LOW';
-  if (value > upperLimit) return 'HIGH';
-  if (value >= lowerWarningLimit && value <= lowerLimit) return 'WARNING: Approaching discharge';
-  if (value >= upperLimit && value <= upperWarningLimit) return 'WARNING: Approaching charge-peak';
-  return 'NORMAL';
+  if (value < lowerLimit) status = 'LOW';
+  else if (value > upperLimit) status = 'HIGH';
+  else if (value >= lowerWarningLimit && value <= lowerLimit) status = 'WARNING: Approaching discharge';
+  else if (value >= upperLimit && value <= upperWarningLimit) status = 'WARNING: Approaching charge-peak';
+
+  return status;
 }
 
 function batteryIsOk(temperature, soc, charge_rate, temperatureUnit = 'Celsius') {
   const temperatureInCelsius = convertTemperatureUnit(temperature, temperatureUnit, 'Celsius');
-  const statuses = [
-    checkValueInRange(temperatureInCelsius, MEASUREMENT_LIMITS.temperature.limit, MEASUREMENT_LIMITS.temperature.tolerance),
-    checkValueInRange(soc, MEASUREMENT_LIMITS.soc.limit, MEASUREMENT_LIMITS.soc.tolerance),
-    checkValueInRange(charge_rate, MEASUREMENT_LIMITS.charge_rate.limit, MEASUREMENT_LIMITS.charge_rate.tolerance)
-  ];
+  const temperatureStatus = checkValueInRange(temperatureInCelsius, MEASUREMENT_LIMITS.temperature.limit, MEASUREMENT_LIMITS.temperature.tolerance);
+  const socStatus = checkValueInRange(soc, MEASUREMENT_LIMITS.soc.limit, MEASUREMENT_LIMITS.soc.tolerance);
+  const chargeRateStatus = checkValueInRange(charge_rate, MEASUREMENT_LIMITS.charge_rate.limit, MEASUREMENT_LIMITS.charge_rate.tolerance);
 
-  console.log(`Temperature is ${temperature} ${temperatureUnit}. Status: ${statuses[0]}`);
-  console.log(`State of Charge is ${soc}${MEASUREMENT_LIMITS.soc.unit}. Status: ${statuses[1]}`);
-  console.log(`Charge Rate is ${charge_rate}${MEASUREMENT_LIMITS.charge_rate.unit}. Status: ${statuses[2]}`);
+  console.log(`Temperature is ${temperature} ${temperatureUnit}. Status: ${temperatureStatus}`);
+  console.log(`State of Charge is ${soc}${MEASUREMENT_LIMITS.soc.unit}. Status: ${socStatus}`);
+  console.log(`Charge Rate is ${charge_rate}${MEASUREMENT_LIMITS.charge_rate.unit}. Status: ${chargeRateStatus}`);
 
-  return statuses.every((status) => status === 'NORMAL');
+  return temperatureStatus === 'NORMAL' && socStatus === 'NORMAL' && chargeRateStatus === 'NORMAL';
 }
 
 module.exports = { batteryIsOk };
