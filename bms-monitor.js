@@ -5,10 +5,25 @@ const MEASUREMENT_LIMITS = {
 };
 
 function convertTemperatureUnit(temperature, fromUnit, toUnit) {
-  if (fromUnit === toUnit) return temperature;
-  if (fromUnit === 'Celsius' && toUnit === 'Fahrenheit') return (temperature * 9 / 5) + 32;
-  if (fromUnit === 'Fahrenheit' && toUnit === 'Celsius') return (temperature - 32) * 5 / 9;
-  throw new Error(`Invalid temperature units: ${fromUnit}, ${toUnit}`);
+  const temperatureUnits = { Celsius: 'Fahrenheit', Fahrenheit: 'Celsius' };
+  
+  if (!(fromUnit in temperatureUnits && toUnit in temperatureUnits)) {
+    throw new Error(`Invalid temperature units: ${fromUnit}, ${toUnit}`);
+  }
+  
+  if (fromUnit === toUnit) {
+    return temperature;
+  }
+  
+  const conversionFactor = fromUnit === 'Celsius' ? 9 / 5 : 5 / 9;
+  const offset = fromUnit === 'Celsius' ? 32 : -32;
+
+  switch(true) {
+    case units[fromUnit] === toUnit:
+      return temperature * conversionFactor;
+    case units[fromUnit] !== toUnit:
+      return (temperature * conversionFactor) + offset;
+  }
 }
 
 function checkValueInRange(value, limit, tolerance) {
@@ -16,14 +31,21 @@ function checkValueInRange(value, limit, tolerance) {
   const lowerLimit = limit.min;
   const upperWarningLimit = upperLimit - (upperLimit * tolerance);
   const lowerWarningLimit = lowerLimit + (upperLimit * tolerance);
-  let status = 'NORMAL';
 
-  if (value < lowerLimit) status = 'LOW';
-  else if (value > upperLimit) status = 'HIGH';
-  else if (value >= lowerWarningLimit && value <= lowerLimit) status = 'WARNING: Approaching discharge';
-  else if (value >= upperLimit && value <= upperWarningLimit) status = 'WARNING: Approaching charge-peak';
-
-  return status;
+  if (value < lowerWarningLimit) {
+    return 'LOW';
+  } 
+  else if (value >= upperWarningLimit) {
+    if (value >= upperLimit) {
+      return 'WARNING: Approaching charge-peak';
+    } 
+    else {
+      return 'NORMAL';
+    }
+  } 
+  else {
+    return 'WARNING: Approaching discharge';
+  }
 }
 
 function batteryIsOk(temperature, soc, charge_rate, temperatureUnit = 'Celsius') {
