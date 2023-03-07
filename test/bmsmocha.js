@@ -3,7 +3,7 @@ const { batteryIsOk } = require('../bms-monitor');
 
 describe('Battery Status', function() {
   it('All parameters are within the range', function() {
-    assert.isFalse(batteryIsOk(25, 50, 0.5));
+    assert.isTrue(batteryIsOk(25, 50, 0.5));
   });
 
   it('Temperature is high', function() {
