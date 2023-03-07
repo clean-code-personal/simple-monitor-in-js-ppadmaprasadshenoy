@@ -5,12 +5,9 @@ const MEASUREMENT_LIMITS = {
 };
 
 function convertTemperatureUnit(temperature, fromUnit, toUnit) {
-  if (fromUnit === 'Celsius' && toUnit === 'Fahrenheit') {
-    return temperature * 9 / 5 + 32;
-  }
-  if (fromUnit === 'Fahrenheit' && toUnit === 'Celsius') {
-    return (temperature - 32) * 5 / 9;
-  }
+  if (fromUnit === toUnit) return temperature;
+  if (fromUnit === 'Celsius' && toUnit === 'Fahrenheit') return (temperature * 9 / 5) + 32;
+  if (fromUnit === 'Fahrenheit' && toUnit === 'Celsius') return (temperature - 32) * 5 / 9;
   throw new Error(`Invalid temperature units: ${fromUnit}, ${toUnit}`);
 }
 
@@ -19,20 +16,14 @@ function checkValueInRange(value, limit, tolerance) {
   const lowerLimit = limit.min;
   const upperWarningLimit = upperLimit - (upperLimit * tolerance);
   const lowerWarningLimit = lowerLimit + (upperLimit * tolerance);
+  let status = 'NORMAL';
 
-  if (value < lowerLimit) {
-    return 'LOW';
-  }
+  if (value < lowerLimit) status = 'LOW';
+  else if (value > upperLimit) status = 'HIGH';
+  else if (value >= lowerWarningLimit && value <= lowerLimit) status = 'WARNING: Approaching discharge';
+  else if (value >= upperLimit && value <= upperWarningLimit) status = 'WARNING: Approaching charge-peak';
 
-  if (value > upperLimit) {
-    return 'HIGH';
-  }
-
-  if (value >= lowerWarningLimit || value <= upperWarningLimit) {
-    return 'WARNING';
-  }
-
-  return 'NORMAL';
+  return status;
 }
 
 function batteryIsOk(temperature, soc, charge_rate, temperatureUnit = 'Celsius') {
