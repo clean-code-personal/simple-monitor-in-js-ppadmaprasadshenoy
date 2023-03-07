@@ -6,14 +6,19 @@ const MEASUREMENT_LIMITS = {
 
 function convertTemperatureUnit(temperature, fromUnit, toUnit) {
   if (fromUnit === toUnit) return temperature;
-  
-  const isCelsiusToFahrenheit = fromUnit === 'Celsius' && toUnit === 'Fahrenheit';
-  const isFahrenheitToCelsius = fromUnit === 'Fahrenheit' && toUnit === 'Celsius';
 
-  if (isCelsiusToFahrenheit) return (temperature * 9 / 5) + 32;
-  if (isFahrenheitToCelsius) return (temperature - 32) * 5 / 9;
+  const conversions = {
+    'Celsius-Fahrenheit': (temperature) => (temperature * 9 / 5) + 32,
+    'Fahrenheit-Celsius': (temperature) => (temperature - 32) * 5 / 9
+  };
 
-  throw new Error(`Invalid temperature units: ${fromUnit}, ${toUnit}`);
+  const conversionKey = `${fromUnit}-${toUnit}`;
+  const conversionFunction = conversions[conversionKey];
+
+  if (!conversionFunction) {
+    throw new Error(`Invalid temperature units: ${fromUnit}, ${toUnit}`);
+  }
+  return conversionFunction(temperature);
 }
 
 function checkValueInRange(value, limit, tolerance) {
@@ -21,21 +26,21 @@ function checkValueInRange(value, limit, tolerance) {
   const lowerLimit = limit.min;
   const upperWarningLimit = upperLimit - (upperLimit * tolerance);
   const lowerWarningLimit = lowerLimit + (upperLimit * tolerance);
-  let status = 'NORMAL';
 
   if (value < lowerLimit) {
-    status = 'LOW';
+    return 'LOW';
   } 
-  else if (value > upperLimit) {
-    status = 'HIGH';
+
+  if (value > upperLimit) {
+    return 'HIGH';
   } 
-  else if ((value >= lowerWarningLimit && value <= lowerLimit) || (value >= upperLimit && value <= upperWarningLimit)) {
-    status = 'WARNING: Approaching limit';
+
+  if ((value >= lowerWarningLimit && value <= lowerLimit) || (value >= upperLimit && value <= upperWarningLimit)) {
+    return 'WARNING: Approaching limit';
   }
 
-  return status;
+  return 'NORMAL';
 }
-
 
 function batteryIsOk(temperature, soc, charge_rate, temperatureUnit = 'Celsius') {
   const temperatureInCelsius = convertTemperatureUnit(temperature, temperatureUnit, 'Celsius');
