@@ -35,14 +35,14 @@ function calculateLimits(limit, tolerance) {
 function checkValueInRange(value, limit, tolerance) {
   const { upperWarningLimit, lowerWarningLimit } = calculateLimits(limit, tolerance);
 
-  const conditionsToResult = {
-    [value < limit.min]: 'LOW',
-    [value > limit.max]: 'HIGH',
-    [value >= lowerWarningLimit && value <= limit.min || value >= limit.max && value <= upperWarningLimit]: 'WARNING: Approaching limit',
-    [true]: 'NORMAL'
-  };
+  const conditionsToResult = new Map([
+    [value < limit.min, 'LOW'],
+    [value > limit.max, 'HIGH'],
+    [value >= lowerWarningLimit && value <= limit.min || value >= limit.max && value <= upperWarningLimit, 'WARNING: Approaching limit'],
+    [true, 'NORMAL']
+  ]);
 
-  return conditionsToResult[true];
+  return conditionsToResult.get(true);
 }
 
 function batteryIsOk(temperature, soc, charge_rate, temperatureUnit = 'Celsius') {
