@@ -21,22 +21,29 @@ function convertTemperatureUnit(temperature, fromUnit, toUnit) {
   return conversionFunction(temperature);
 }
 
+function calculateLimits(limit, tolerance) {
+  const upperLimit = limit.max;
+  const lowerLimit = limit.min;
+  const upperWarningLimit = upperLimit - (upperLimit * tolerance);
+  const lowerWarningLimit = lowerLimit + (upperLimit * tolerance);
+  return {
+    upperWarningLimit,
+    lowerWarningLimit
+  };
+}
+
 function checkValueInRange(value, limit, tolerance) {
-  const { upperWarningLimit, lowerWarningLimit } = calculateWarningLimits(limit, tolerance);
-  const result = calculateResult(value, limit, upperWarningLimit, lowerWarningLimit);
-  return result;
-}
+  const { upperWarningLimit, lowerWarningLimit } = calculateLimits(limit, tolerance);
 
-function calculateResult(value, limit, upperWarningLimit, lowerWarningLimit) {
-  const resultMap = new Map([
-    [value < limit.min, 'LOW'],
-    [value > limit.max, 'HIGH'],
-    [(value >= lowerWarningLimit && value <= limit.min) || (value >= limit.max && value <= upperWarningLimit), 'WARNING: Approaching limit']
-  ]);
-  const defaultResult = 'NORMAL';
-  return resultMap.get(true) || defaultResult;
-}
+  const conditionsToResult = {
+    [value < limit.min]: 'LOW',
+    [value > limit.max]: 'HIGH',
+    [value >= lowerWarningLimit && value <= limit.min || value >= limit.max && value <= upperWarningLimit]: 'WARNING: Approaching limit',
+    [true]: 'NORMAL'
+  };
 
+  return conditionsToResult[true];
+}
 
 function batteryIsOk(temperature, soc, charge_rate, temperatureUnit = 'Celsius') {
   const temperatureInCelsius = convertTemperatureUnit(temperature, temperatureUnit, 'Celsius');
