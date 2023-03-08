@@ -22,19 +22,22 @@ function convertTemperatureUnit(temperature, fromUnit, toUnit) {
 }
 
 function checkValueInRange(value, limit, tolerance) {
-  const upperLimit = limit.max;
-  const lowerLimit = limit.min;
-  const upperWarningLimit = upperLimit - (upperLimit * tolerance);
-  const lowerWarningLimit = lowerLimit + (upperLimit * tolerance);
+  const { upperWarningLimit, lowerWarningLimit } = calculateWarningLimits(limit, tolerance);
+  const result = calculateResult(value, limit, upperWarningLimit, lowerWarningLimit);
+  return result;
+}
 
-  const conditionsToResult = {
-    [value < lowerLimit]: 'LOW',
-    [value > upperLimit]: 'HIGH',
-    [value >= lowerWarningLimit && value <= lowerLimit || value >= upperLimit && value <= upperWarningLimit]: 'WARNING: Approaching limit',
-    [true]: 'NORMAL'
-  };
-
-  return conditionsToResult[true];
+function calculateResult(value, limit, upperWarningLimit, lowerWarningLimit) {
+  if (value < limit.min) {
+    return 'LOW';
+  }
+  if (value > limit.max) {
+    return 'HIGH';
+  }
+  if ((value >= lowerWarningLimit && value <= limit.min) || (value >= limit.max && value <= upperWarningLimit)) {
+    return 'WARNING: Approaching limit';
+  }
+  return 'NORMAL';
 }
 
 function batteryIsOk(temperature, soc, charge_rate, temperatureUnit = 'Celsius') {
