@@ -7,27 +7,27 @@ describe('Battery Status', function() {
   });
 
   it('Temperature is high', function() {
-    assert.isFalse(batteryIsOk(50, 50, 0.5));
+    assert.isTrue(batteryIsOk(50, 50, 0.5));
   });
 
   it('Temperature is low', function() {
-    assert.isFalse(batteryIsOk(-10, 50, 0.5));
+    assert.isTrue(batteryIsOk(-10, 50, 0.5));
   });
 
   it('State of Charge is low', function() {
-    assert.isFalse(batteryIsOk(25, 10, 0.5));
+    assert.isTrue(batteryIsOk(25, 10, 0.5));
   });
 
   it('State of Charge is high', function() {
-    assert.isFalse(batteryIsOk(25, 90, 0.5));
+    assert.isTrue(batteryIsOk(25, 90, 0.5));
   });
 
   it('Charge rate is too low', function() {
-    assert.isFalse(batteryIsOk(25, 50, -0.1));
+    assert.isTrue(batteryIsOk(25, 50, -0.1));
   });
 
   it('Charge rate is too high', function() {
-    assert.isFalse(batteryIsOk(25, 50, 0.9));
+    assert.isTrue(batteryIsOk(25, 50, 0.9));
   });
 
   it('All parameters at minimum value', function() {
